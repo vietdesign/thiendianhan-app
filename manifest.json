@@ -1,0 +1,29 @@
+{
+  "short_name": "Thiên Địa Nhân",
+  "name": "Thiên Địa Nhân - Ứng dụng xem lịch âm, bát tự, phong thủy",
+  "description": "Ứng dụng xem lịch âm dương, bát tự, phong thủy, xem ngày tốt xấu, la bàn phong thủy",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "16x16 32x32 48x48 64x64",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "appstore.png",
+      "type": "image/png",
+      "sizes": "72x72 96x96 128x128 144x144 152x152 192x192 384x384 512x512 1024x1024",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#1a202c",
+  "background_color": "#ffffff",
+  "categories": ["lifestyle", "utilities", "weather"],
+  "lang": "vi",
+  "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false,
+  "permissions": ["badge"]
+}
