@@ -1,8 +1,6 @@
-const CACHE_NAME = 'lunar-calendar-v1';
+const CACHE_NAME = 'lunar-calendar-v2';
 const urlsToCache = [
   '/',
-  '/static/js/bundle.js',
-  '/static/css/main.css',
   '/manifest.json',
   '/appstore.png',
   '/favicon.ico'
@@ -21,6 +19,18 @@ self.addEventListener('install', (event) => {
 
 // Fetch event - serve from cache if available
 self.addEventListener('fetch', (event) => {
+  // Skip caching for JavaScript and CSS files to avoid stale cache issues
+  if (event.request.url.includes('/static/js/') || event.request.url.includes('/static/css/')) {
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => {
+          // If network fails, try to get from cache as fallback
+          return caches.match(event.request);
+        })
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
