@@ -19,12 +19,12 @@ self.addEventListener('install', (event) => {
 
 // Fetch event - serve from cache if available
 self.addEventListener('fetch', (event) => {
-  // Skip caching for JavaScript and CSS files to avoid stale cache issues
+  // Không cache các file JavaScript và CSS để tránh lỗi stale cache
   if (event.request.url.includes('/static/js/') || event.request.url.includes('/static/css/')) {
     event.respondWith(
       fetch(event.request)
         .catch(() => {
-          // If network fails, try to get from cache as fallback
+          // Nếu network fail, thử lấy từ cache làm fallback
           return caches.match(event.request);
         })
     );

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xóa Cache - Thiên Địa Nhân</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            backdrop-filter: blur(10px);
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin: 1rem;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .status {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Xóa Cache</h1>
+        <p>Nhấn nút bên dưới để xóa cache cũ và reload ứng dụng</p>
+        
+        <button onclick="clearCache()">Xóa Cache & Reload</button>
+        <button onclick="unregisterSW()">Xóa Service Worker</button>
+        
+        <div id="status" class="status" style="display: none;"></div>
+    </div>
+
+    <script>
+        function showStatus(message, isError = false) {
+            const status = document.getElementById('status');
+            status.style.display = 'block';
+            status.style.background = isError ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0, 255, 0, 0.2)';
+            status.textContent = message;
+        }
+
+        async function clearCache() {
+            try {
+                showStatus('Đang xóa cache...');
+                
+                // Xóa tất cả cache
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(
+                        cacheNames.map(cacheName => caches.delete(cacheName))
+                    );
+                    showStatus(`Đã xóa ${cacheNames.length} cache`);
+                }
+
+                // Reload service worker
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        await registration.update();
+                    }
+                    showStatus('Đã cập nhật service worker');
+                }
+
+                // Reload trang sau 2 giây
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+
+            } catch (error) {
+                showStatus('Lỗi: ' + error.message, true);
+            }
+        }
+
+        async function unregisterSW() {
+            try {
+                showStatus('Đang xóa service worker...');
+                
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(
+                        registrations.map(registration => registration.unregister())
+                    );
+                    showStatus(`Đã xóa ${registrations.length} service worker`);
+                }
+
+                // Reload trang sau 2 giây
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+
+            } catch (error) {
+                showStatus('Lỗi: ' + error.message, true);
+            }
+        }
+    </script>
+</body>
+</html> 
