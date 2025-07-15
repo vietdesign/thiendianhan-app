@@ -1,6 +1,6 @@
 {
   "outputDirectory": "build",
-  "framework": "create-react-app",
+  "framework": null,
   "buildCommand": null,
   "installCommand": null,
   "rewrites": [
