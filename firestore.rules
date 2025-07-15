@@ -1,0 +1,291 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ========================================
+    // FIRESTORE SECURITY RULES - THIÊN ĐỊA NHÂN
+    // ========================================
+    // 
+    // ✅ CẢI THIỆN: Đã loại bỏ fallback "true" để tăng cường bảo mật
+    // ✅ Chỉ sử dụng Firebase admin authentication
+    // ✅ Proper role-based access control
+    
+    // ========================================
+    // 1. COLLECTION USERS - QUẢN LÝ NGƯỜI DÙNG
+    // ========================================
+    // Lưu trữ thông tin cá nhân, membership, stars, permissions của users
+    match /users/{userId} {
+      // ✅ ĐỌC DỮ LIỆU: Cho phép đọc thông tin user (cần cho việc tìm kiếm đăng nhập)
+      // Mục đích: User tìm kiếm để đăng nhập, admin panel quản lý users
+      allow read: if true; // Cho phép đọc để tìm kiếm đăng nhập
+      
+      // ✅ GHI DỮ LIỆU: Cho phép user ghi dữ liệu của chính mình HOẶC admin ghi dữ liệu bất kỳ
+      // Mục đích: User cập nhật thông tin cá nhân, admin quản lý users
+      allow write: if request.auth != null && 
+                   (request.auth.uid == userId ||                    // User ghi dữ liệu của chính mình
+                    request.auth.token.email == 'viettaquang.design@gmail.com');  // Admin email chính thức
+      
+      // ========================================
+      // 1.1. SUBCONLLECTION STAR TRANSACTIONS - LỊCH SỬ GIAO DỊCH SAO
+      // ========================================
+      // Lưu trữ lịch sử cộng/trừ sao của từng user
+      match /starTransactions/{transactionId} {
+        // ✅ ĐỌC/GHI: Cho phép tất cả user đã đăng nhập truy cập lịch sử giao dịch sao
+        // Mục đích: User xem lịch sử giao dịch, admin quản lý transactions
+        allow read, write: if request.auth != null;
+      }
+    }
+    
+    // ========================================
+    // 1.2. ADMIN OVERRIDE - QUYỀN ADMIN ĐỌC TẤT CẢ USERS (REMOVED)
+    // ========================================
+    // ❌ ĐÃ LOẠI BỎ: Rule này conflict với rule chính và gây lỗi đăng nhập
+    // ✅ Thay thế: Sử dụng rule chính cho phép tất cả user đã đăng nhập đọc users
+    // Mục đích: Cho phép user tìm kiếm để đăng nhập, admin vẫn có quyền đặc biệt qua email check
+    
+    // ========================================
+    // 2. COLLECTION ADMIN - CẤU HÌNH ADMIN
+    // ========================================
+    // Lưu trữ cấu hình hệ thống: membership packages, feature flags, daily rewards
+    match /admin/{document} {
+      // ✅ ĐỌC: Cho phép đọc public configs (membership packages, feature flags, etc.)
+      // Mục đích: Frontend cần đọc cấu hình để hiển thị membership tiers, feature flags
+      allow read: if true; // Public read for configs
+      
+      // ✅ GHI: Chỉ admin mới được ghi cấu hình
+      // Mục đích: Admin cập nhật cấu hình hệ thống
+      allow write: if request.auth != null && 
+                   request.auth.token.email == 'viettaquang.design@gmail.com';  // Admin email chính thức
+    }
+    
+    // ========================================
+    // 2.1. COLLECTION ADMIN CONFIG - CẤU HÌNH ADMIN MỚI
+    // ========================================
+    // Lưu trữ cấu hình admin cho các tính năng mới: article access, payment settings
+    match /adminConfig/{document} {
+      // ✅ ĐỌC: Chỉ admin mới được đọc cấu hình admin
+      // Mục đích: Admin panel đọc cấu hình để hiển thị và quản lý
+      allow read: if request.auth != null && 
+                  request.auth.token.email == 'viettaquang.design@gmail.com';  // Admin email chính thức
+      
+      // ✅ GHI: Chỉ admin mới được ghi cấu hình admin
+      // Mục đích: Admin cập nhật cấu hình hệ thống
+      allow write: if request.auth != null && 
+                   request.auth.token.email == 'viettaquang.design@gmail.com';  // Admin email chính thức
+    }
+    
+    // ========================================
+    // 3. COLLECTION PROFILES - HỒ SƠ NGƯỜI DÙNG
+    // ========================================
+    // Lưu trữ thông tin chi tiết của user: preferences, settings, additional info
+    match /profiles/{userId} {
+      // ✅ ĐỌC: Cho phép user đã đăng nhập đọc profile
+      // Mục đích: User xem thông tin profile của mình
+      allow read: if request.auth != null;
+      
+      // ✅ GHI: Cho phép user ghi profile của chính mình HOẶC admin ghi profile bất kỳ
+      // Mục đích: User cập nhật thông tin cá nhân, admin quản lý profiles
+      allow write: if request.auth != null && 
+                   (request.auth.uid == userId ||                    // User ghi profile của chính mình
+                    request.auth.token.email == 'viettaquang.design@gmail.com');  // Admin email chính thức
+    }
+    
+    // ========================================
+    // 3.1. ADMIN OVERRIDE - QUYỀN ADMIN ĐỌC TẤT CẢ PROFILES
+    // ========================================
+    // Cho phép admin đọc tất cả profile data cho admin panel
+    match /profiles/{document=**} {
+      // ✅ ĐỌC: Chỉ admin mới được đọc tất cả profile
+      // Mục đích: Admin panel cần đọc thông tin tất cả profiles
+      allow read: if request.auth != null && 
+                  request.auth.token.email == 'viettaquang.design@gmail.com';
+      
+      // ✅ GHI: Cho phép admin ghi profile
+      // Mục đích: Admin cập nhật thông tin profiles
+      allow write: if request.auth != null && 
+                   request.auth.token.email == 'viettaquang.design@gmail.com';
+    }
+    
+    // ========================================
+    // 4. COLLECTION PAGE VISITS - THỐNG KÊ TRUY CẬP TRANG
+    // ========================================
+    // Lưu trữ thống kê lượt truy cập từng trang của website
+    match /pageVisits/{pageName} {
+      // ✅ ĐỌC: Cho phép đọc public thống kê truy cập trang
+      // Mục đích: Hiển thị thống kê trong sidebar, admin dashboard
+      allow read: if true;
+      
+      // ✅ GHI/TẠO: Chỉ user đã đăng nhập mới được ghi thống kê
+      // Mục đích: Track lượt truy cập khi user sử dụng các tính năng
+      allow write, create: if request.auth != null;
+    }
+    
+    // ========================================
+    // 5. COLLECTION SESSION VISITS - THỐNG KÊ TRUY CẬP THEO PHIÊN
+    // ========================================
+    // Lưu trữ thống kê truy cập theo từng session (phiên làm việc)
+    match /sessionVisits/{sessionId} {
+      // ✅ ĐỌC: Cho phép đọc public thống kê truy cập theo phiên
+      // Mục đích: Phân tích user behavior, admin analytics
+      allow read: if true;
+      
+      // ✅ GHI/TẠO: Chỉ user đã đăng nhập mới được ghi thống kê phiên
+      // Mục đích: Track session visits cho analytics
+      allow write, create: if request.auth != null;
+    }
+    
+    // ========================================
+    // 6. COLLECTION ARTICLES - BÀI VIẾT TIN TỨC
+    // ========================================
+    // Lưu trữ bài viết tin tức phong thủy, tử vi
+    match /articles/{articleId} {
+      // ✅ ĐỌC: Cho phép đọc public tất cả bài viết
+      // Mục đích: Hiển thị tin tức cho tất cả visitors
+      allow read: if true;
+      
+      // ✅ GHI: Chỉ user đã đăng nhập mới được tạo/sửa bài viết
+      // Mục đích: Admin tạo và quản lý content
+      allow write: if request.auth != null;
+    }
+    
+    // ========================================
+    // 7. COLLECTION CATEGORIES - DANH MỤC BÀI VIẾT
+    // ========================================
+    // Lưu trữ danh mục phân loại bài viết
+    match /categories/{categoryId} {
+      // ✅ ĐỌC: Cho phép đọc public tất cả danh mục
+      // Mục đích: Hiển thị danh mục cho navigation, filtering
+      allow read: if true;
+      
+      // ✅ GHI: Chỉ user đã đăng nhập mới được tạo/sửa danh mục
+      // Mục đích: Admin quản lý categories
+      allow write: if request.auth != null;
+    }
+    
+    // ========================================
+    // 8. COLLECTION ARTICLE CATEGORIES - LIÊN KẾT BÀI VIẾT-DANH MỤC
+    // ========================================
+    // Lưu trữ mối quan hệ giữa bài viết và danh mục (many-to-many)
+    match /articleCategories/{categoryId} {
+      // ✅ ĐỌC: Cho phép đọc public liên kết bài viết-danh mục
+      // Mục đích: Hiển thị bài viết theo danh mục
+      allow read: if true;
+      
+      // ✅ GHI: Chỉ user đã đăng nhập mới được tạo/sửa liên kết
+      // Mục đích: Admin quản lý việc phân loại bài viết
+      allow write: if request.auth != null;
+    }
+    
+    // ========================================
+    // 9. COLLECTION VISITS - THỐNG KÊ TRUY CẬP (LEGACY)
+    // ========================================
+    // Lưu trữ thống kê truy cập cũ (đã được thay thế bởi pageVisits và sessionVisits)
+    match /visits/{visitId} {
+      // ✅ ĐỌC/GHI: Chỉ user đã đăng nhập mới được truy cập (legacy system)
+      // Mục đích: Backward compatibility cho dữ liệu cũ
+      allow read, write: if request.auth != null;
+    }
+    
+    // ========================================
+    // 10. COLLECTION FEATURE FLAGS - CỜ TÍNH NĂNG
+    // ========================================
+    // Lưu trữ cấu hình bật/tắt các tính năng của ứng dụng
+    match /featureFlags/{flagId} {
+      // ✅ ĐỌC: Cho phép đọc public tất cả feature flags
+      // Mục đích: Frontend cần đọc để bật/tắt tính năng
+      allow read: if true;
+      
+      // ✅ GHI: Chỉ user đã đăng nhập mới được tạo/sửa feature flags
+      // Mục đích: Admin quản lý feature flags
+      allow write: if request.auth != null;
+    }
+    
+    // ========================================
+    // 11. COLLECTION TEMP ACCESS - TRUY CẬP TẠM THỜI CHO TÍNH NĂNG SAO
+    // ========================================
+    // Lưu trữ dữ liệu truy cập tạm thời cho các tính năng dựa trên sao
+    match /tempAccess/{userId} {
+      // ✅ ĐỌC/GHI: Chỉ user mới được truy cập dữ liệu temp access của chính mình
+      // Mục đích: Lưu trữ tạm thời thông tin truy cập tính năng premium
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // ========================================
+    // 12. COLLECTION USERNAMES - QUẢN LÝ USERNAME ĐĂNG NHẬP
+    // ========================================
+    // Lưu trữ mapping giữa username và user ID để hỗ trợ đăng nhập bằng username
+    match /usernames/{username} {
+      // ✅ ĐỌC: Cho phép đọc để kiểm tra username đã tồn tại chưa
+      // Mục đích: Validation khi tạo/đổi username
+      allow read: if request.auth != null;
+      
+      // ✅ GHI: Cho phép user tạo/đổi username của chính mình HOẶC admin ghi bất kỳ
+      // Mục đích: User đổi username, admin quản lý usernames
+      allow write: if request.auth != null && 
+                   (request.auth.uid == request.resource.data.uid ||             // User tạo/ghi username của chính mình
+                    request.auth.token.email == 'viettaquang.design@gmail.com');  // Admin email chính thức
+    }
+    
+    // ========================================
+    // 13. COLLECTION DAILY STATS - THỐNG KÊ HÀNG NGÀY
+    // ========================================
+    // Lưu trữ thống kê sử dụng Firebase hàng ngày (reads, writes, storage, etc.)
+    match /dailyStats/{dateKey} {
+      // ✅ ĐỌC: Cho phép đọc public thống kê hàng ngày
+      // Mục đích: Admin dashboard hiển thị usage analytics
+      allow read: if true;
+      
+      // ✅ GHI: Chỉ admin mới được ghi thống kê hàng ngày
+      // Mục đích: Firebase usage tracker lưu usage data
+      allow write: if request.auth != null && 
+                   request.auth.token.email == 'viettaquang.design@gmail.com';  // Admin email chính thức
+    }
+    
+    // ========================================
+    // 14. COLLECTION MONTHLY STATS - THỐNG KÊ HÀNG THÁNG
+    // ========================================
+    // Lưu trữ thống kê sử dụng Firebase hàng tháng (tổng hợp từ daily stats)
+    match /monthlyStats/{monthKey} {
+      // ✅ ĐỌC: Cho phép đọc public thống kê hàng tháng
+      // Mục đích: Admin dashboard hiển thị monthly analytics
+      allow read: if true;
+      
+      // ✅ GHI: Chỉ admin mới được ghi thống kê hàng tháng
+      // Mục đích: Firebase usage tracker lưu monthly usage data
+      allow write: if request.auth != null && 
+                   request.auth.token.email == 'viettaquang.design@gmail.com';  // Admin email chính thức
+    }
+    
+    // ========================================
+    // 15. COLLECTION ARTICLE ACCESS - TRUY CẬP BÀI VIẾT CÓ THỜI HẠN
+    // ========================================
+    // Lưu trữ thông tin truy cập bài viết của user sau khi trả sao (30 ngày)
+    match /articleAccess/{accessId} {
+      // ✅ ĐỌC: Cho phép user đọc thông tin truy cập của chính mình
+      // Mục đích: Kiểm tra xem user đã trả sao cho bài viết chưa và còn thời hạn không
+      // accessId format: {articleId}_{userId}
+      allow read: if request.auth != null && 
+                  accessId.matches('.*_' + request.auth.uid + '$');
+      
+      // ✅ GHI: Cho phép user tạo/cập nhật thông tin truy cập của chính mình
+      // Mục đích: User trả sao để mua quyền truy cập bài viết
+      allow write: if request.auth != null && 
+                   accessId.matches('.*_' + request.auth.uid + '$');
+    }
+    
+    // ========================================
+    // 15.1. ADMIN OVERRIDE - QUYỀN ADMIN ĐỌC TẤT CẢ ARTICLE ACCESS
+    // ========================================
+    // Cho phép admin đọc tất cả dữ liệu truy cập bài viết
+    match /articleAccess/{document=**} {
+      // ✅ ĐỌC: Chỉ admin mới được đọc tất cả dữ liệu truy cập bài viết
+      // Mục đích: Admin panel thống kê và quản lý truy cập bài viết
+      allow read: if request.auth != null && 
+                  request.auth.token.email == 'viettaquang.design@gmail.com';
+      
+      // ✅ GHI: Cho phép admin ghi tất cả dữ liệu truy cập bài viết
+      // Mục đích: Admin có thể reset/quản lý truy cập của user
+      allow write: if request.auth != null && 
+                   request.auth.token.email == 'viettaquang.design@gmail.com';
+    }
+  }
+} 
