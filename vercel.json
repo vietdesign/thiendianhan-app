@@ -1,10 +1,12 @@
 {
-    "outputDirectory": "build",
-    "framework": "create-react-app",
-    "rewrites": [
-      {
-        "source": "/(.*)",
-        "destination": "/index.html"
-      }
-    ]
-  } 
+  "outputDirectory": "build",
+  "framework": "create-react-app",
+  "buildCommand": null,
+  "installCommand": null,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+} 
