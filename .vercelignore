@@ -1,9 +1,0 @@
-# Bỏ qua tất cả trừ build folder
-*
-!build/
-!package.json
-!vercel.json
-!craco.config.js
-!firebase.json
-!firestore.rules
-!firestore.indexes.json 
