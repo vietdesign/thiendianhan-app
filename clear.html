@@ -31,9 +31,11 @@
             font-size: 1.1rem;
             cursor: pointer;
             margin: 1rem;
+            transition: all 0.3s;
         }
         button:hover {
             background: #45a049;
+            transform: translateY(-2px);
         }
         .status {
             margin-top: 1rem;
@@ -41,17 +43,29 @@
             border-radius: 0.5rem;
             background: rgba(255, 255, 255, 0.2);
         }
+        .auto-clear {
+            background: #ff9800;
+        }
+        .auto-clear:hover {
+            background: #f57c00;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🧹 Xóa Cache</h1>
-        <p>Nhấn nút bên dưới để xóa cache cũ và reload ứng dụng</p>
+        <h1>🧹 Xóa Cache & Khắc phục lỗi</h1>
+        <p>Nếu gặp lỗi "Unexpected token '<'" hoặc trang trắng, hãy xóa cache:</p>
         
-        <button onclick="clearCache()">Xóa Cache & Reload</button>
-        <button onclick="unregisterSW()">Xóa Service Worker</button>
+        <button onclick="clearCache()">🗑️ Xóa Cache & Reload</button>
+        <button onclick="unregisterSW()">🔧 Xóa Service Worker</button>
+        <button class="auto-clear" onclick="forceRefresh()">⚡ Force Refresh</button>
         
         <div id="status" class="status" style="display: none;"></div>
+        
+        <div style="margin-top: 2rem; font-size: 0.9rem; opacity: 0.8;">
+            <p>💡 Lý do lỗi: Service Worker cache file JS cũ</p>
+            <p>🔄 Giải pháp: Xóa cache và reload lại app</p>
+        </div>
     </div>
 
     <script>
@@ -64,7 +78,7 @@
 
         async function clearCache() {
             try {
-                showStatus('Đang xóa cache...');
+                showStatus('🧹 Đang xóa cache...');
                 
                 // Xóa tất cả cache
                 if ('caches' in window) {
@@ -72,8 +86,12 @@
                     await Promise.all(
                         cacheNames.map(cacheName => caches.delete(cacheName))
                     );
-                    showStatus(`Đã xóa ${cacheNames.length} cache`);
+                    showStatus(`✅ Đã xóa ${cacheNames.length} cache`);
                 }
+
+                // Xóa localStorage
+                localStorage.clear();
+                sessionStorage.clear();
 
                 // Reload service worker
                 if ('serviceWorker' in navigator) {
@@ -81,7 +99,7 @@
                     for (let registration of registrations) {
                         await registration.update();
                     }
-                    showStatus('Đã cập nhật service worker');
+                    showStatus('🔄 Đã cập nhật service worker');
                 }
 
                 // Reload trang sau 2 giây
@@ -90,31 +108,51 @@
                 }, 2000);
 
             } catch (error) {
-                showStatus('Lỗi: ' + error.message, true);
+                showStatus('❌ Lỗi: ' + error.message, true);
             }
         }
 
         async function unregisterSW() {
             try {
-                showStatus('Đang xóa service worker...');
+                showStatus('🔧 Đang xóa service worker...');
                 
                 if ('serviceWorker' in navigator) {
                     const registrations = await navigator.serviceWorker.getRegistrations();
                     await Promise.all(
                         registrations.map(registration => registration.unregister())
                     );
-                    showStatus(`Đã xóa ${registrations.length} service worker`);
+                    showStatus(`✅ Đã xóa ${registrations.length} service worker`);
                 }
 
-                // Reload trang sau 2 giây
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 2000);
+                // Xóa cache
+                await clearCache();
 
             } catch (error) {
-                showStatus('Lỗi: ' + error.message, true);
+                showStatus('❌ Lỗi: ' + error.message, true);
             }
         }
+
+        async function forceRefresh() {
+            try {
+                showStatus('⚡ Force refresh...');
+                
+                // Xóa tất cả
+                await clearCache();
+                
+                // Force reload với cache bypass
+                window.location.reload(true);
+                
+            } catch (error) {
+                showStatus('❌ Lỗi: ' + error.message, true);
+            }
+        }
+
+        // Auto-detect và hiển thị lỗi
+        window.addEventListener('error', function(e) {
+            if (e.message.includes('Unexpected token')) {
+                showStatus('🚨 Phát hiện lỗi "Unexpected token" - Hãy xóa cache!', true);
+            }
+        });
     </script>
 </body>
-</html> 
+</html>
