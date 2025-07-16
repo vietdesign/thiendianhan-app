@@ -1,10 +1,13 @@
-const CACHE_NAME = 'lunar-calendar-v2';
+const CACHE_NAME = 'lunar-calendar-v4';
 const urlsToCache = [
   '/',
   '/manifest.json',
   '/appstore.png',
   '/favicon.ico'
 ];
+
+// Thêm timestamp để force update
+const APP_VERSION = Date.now();
 
 // Install event - cache resources
 self.addEventListener('install', (event) => {
@@ -13,6 +16,17 @@ self.addEventListener('install', (event) => {
       .then((cache) => {
         console.log('Opened cache');
         return cache.addAll(urlsToCache);
+      })
+      .then(() => {
+        // Thông báo cho main thread rằng có update mới
+        self.clients.matchAll().then(clients => {
+          clients.forEach(client => {
+            client.postMessage({ 
+              type: 'UPDATE_AVAILABLE',
+              version: APP_VERSION 
+            });
+          });
+        });
       })
   );
 });
@@ -61,5 +75,16 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+  }
+  
+  // Thêm message để force update
+  if (event.data && event.data.type === 'FORCE_UPDATE') {
+    self.skipWaiting();
+    // Gửi message về main thread để reload
+    self.clients.matchAll().then(clients => {
+      clients.forEach(client => {
+        client.postMessage({ type: 'FORCE_RELOAD' });
+      });
+    });
   }
 }); 
