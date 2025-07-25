@@ -1,22 +1,19 @@
 {
   "files": {
-    "main.css": "/static/css/main.3704590a.css",
-    "main.js": "/static/js/main.dcdf941d.js",
+    "main.css": "/static/css/main.f110d48f.css",
+    "main.js": "/static/js/main.39b6e6bd.js",
     "static/js/393.30a64030.chunk.js": "/static/js/393.30a64030.chunk.js",
     "static/js/514.b6a5c293.chunk.js": "/static/js/514.b6a5c293.chunk.js",
     "static/js/205.598ec5fe.chunk.js": "/static/js/205.598ec5fe.chunk.js",
     "static/js/82.eb76e141.chunk.js": "/static/js/82.eb76e141.chunk.js",
     "static/js/265.54ef201a.chunk.js": "/static/js/265.54ef201a.chunk.js",
     "static/js/206.6f3bb63f.chunk.js": "/static/js/206.6f3bb63f.chunk.js",
-    "static/media/HuyenKhongDaiQuai2.png": "/static/media/HuyenKhongDaiQuai2.b731b6c75865036d57d7.png",
-    "static/media/HuyenKhongDaiQuai.png": "/static/media/HuyenKhongDaiQuai.aae981c2575ef965a46d.png",
     "static/media/cover-grid.png": "/static/media/cover-grid.3eeb242f0b82b786604e.png",
-    "static/media/24SonHuongMini.png": "/static/media/24SonHuongMini.e3ad8826eb3622573031.png",
     "static/media/cover-gold.png": "/static/media/cover-gold.a3b95f0e3fb02ff87cd1.png",
     "index.html": "/index.html"
   },
   "entrypoints": [
-    "static/css/main.3704590a.css",
-    "static/js/main.dcdf941d.js"
+    "static/css/main.f110d48f.css",
+    "static/js/main.39b6e6bd.js"
   ]
 }
